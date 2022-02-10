@@ -2,16 +2,17 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-type GeneratorType<T> = () => T;
 
-type LoadOnlyEntryType<T> = [key: string];
+export type GeneratorType<T> = () => T;
+type LoadOnlyEntryType = [key: string];
 type LoadAndGenerateEntryType<T> = [key: string, generator: GeneratorType<T>];
-type LoadEntryType<T> = LoadOnlyEntryType<T> | LoadAndGenerateEntryType<T>;
+type LoadEntryType<T> = LoadOnlyEntryType | LoadAndGenerateEntryType<T>;
 
 
 export class Cache<T> {
 
     readonly #storage: Map<string, T> = new Map();
+
 
     load<E extends LoadEntryType<T>>(...args: E): E extends LoadAndGenerateEntryType<T> ? T : T | undefined {
         const [key, generator] = args;
