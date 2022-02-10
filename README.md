@@ -1,6 +1,9 @@
-# Caching
+# **Allo Caching** for Deno 🦕
 
-## `Cache`
+Simple caching solution in Typescript.
+
+
+## `Cache<ValueType>`
 
 ```ts
 const cache = new Cache<string>();
@@ -39,3 +42,13 @@ cache.save(cacheKey, 'Lorem ipsum');
 cache.has(cacheKey); // -> boolean
 
 ```
+
+
+
+## Documentation 📖
+
+Description of all classes and methods with **examples** will found in the [documentation](https://doc.deno.land/https://deno.land/x/allo_caching@v1.0.1/mod.ts).
+
+---
+
+Check out other [ours packages 📦](https://deno.land/x?query=allo_)!
