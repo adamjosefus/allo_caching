@@ -14,6 +14,11 @@ export class Cache<T> {
     readonly #storage: Map<string, T> = new Map();
 
 
+    /**
+     * @param `key` Cache key.
+     * @param `generator` Generator generates a value if it is not loaded.
+     * @returns `<T>` or `<T> | undefined` – depending on whether the generator has been set.
+     */
     load<E extends LoadEntryType<T>>(...args: E): E extends LoadAndGenerateEntryType<T> ? T : T | undefined {
         const [key, generator] = args;
 
@@ -33,16 +38,30 @@ export class Cache<T> {
     }
 
 
+    /**
+     * Save value to cache by key.
+     * @param key 
+     * @param value 
+     */
     save(key: string, value: T): void {
         this.#storage.set(key, value);
     }
 
 
+    /**
+     * Check if value exists in cache.
+     * @param key 
+     * @param value 
+     */
     has(key: string): boolean {
         return this.#storage.has(key);
     }
 
 
+    /**
+     * Delete value from cache.
+     * @param key 
+     */
     delete(key: string): void {
         this.#storage.delete(key);
     }
