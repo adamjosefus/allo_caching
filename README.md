@@ -47,7 +47,7 @@ cache.has(cacheKey); // -> boolean
 
 ## Documentation 📖
 
-Description of all classes and methods with **examples** will found in the [documentation](https://doc.deno.land/https://deno.land/x/allo_caching@v1.0.1/mod.ts).
+Description of all classes and methods with **examples** will found in the [documentation](https://doc.deno.land/https://raw.githubusercontent.com/adamjosefus/allo_caching/main/mod.ts).
 
 ---
 
