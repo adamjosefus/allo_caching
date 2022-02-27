@@ -18,11 +18,18 @@ type LoadEntryType<T> =
     | LoadOnlyEntryType | LoadAndGenerateEntryType<T>;
 
 
+type StateType = {
+    timestamp: number;
+    files: Map<string, number>;
+};
+
+
 export class Cache<T> {
 
     readonly #storage: Map<string, {
         value: T,
         dependencies?: DependenciesType,
+        state: StateType,
     }> = new Map();
 
 
@@ -85,16 +92,29 @@ export class Cache<T> {
         const stored = this.#storage.get(key);
         if (stored === undefined) return undefined;
 
-        const { value, dependencies } = stored;
+        const { value, dependencies, state } = stored;
         if (dependencies === undefined) return value;
 
-        if (!this.#isDependenciesValid(dependencies)) return undefined;
+        if (!this.#invalidate(state, dependencies)) return undefined;
+
+        // TODO: if ((dependencies?.sliding ?? false) === true) timestamp = Date.now();
+
         return value;
     }
 
 
-    #isDependenciesValid(dependencies: DependenciesType): boolean {
+    #invalidate(state: StateType, dependencies: DependenciesType) {
+        const now = Date.now();
+        
+        if (dependencies.expire !== undefined) {
+            if (now > state.timestamp + dependencies.expire) return true;
+        }
+
+
+        return false;
     }
+
+
 
 
     /**
@@ -106,6 +126,7 @@ export class Cache<T> {
         this.#storage.set(key, {
             value,
             dependencies,
+            timestamp: Date.now(),
         });
     }
 
