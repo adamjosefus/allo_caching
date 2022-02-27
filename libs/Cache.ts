@@ -159,4 +159,13 @@ export class Cache<T> {
     delete(key: string): void {
         this.remove(key);
     }
+
+
+
+    #createState(dependencies: DependenciesType): StateType {
+        return {
+            timestamp: Date.now(),
+            files: new Map(),
+        };
+    }
 }
