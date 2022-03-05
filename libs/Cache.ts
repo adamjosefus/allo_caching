@@ -147,19 +147,6 @@ export class Cache<T> {
     }
 
 
-
-    #invalidate(key: string) {
-        if (!this.#storage.has(key)) return;
-        const { dependencies, state } = this.#storage.get(key)!;
-        if (!dependencies) return;
-
-        if (!this.#isValid(state, dependencies)) {
-            this.remove(key);
-            return undefined;
-        }
-    }
-
-
     #isValid(state: StateType, dependencies: DependenciesType) {
         if (dependencies.expire) {
             const expired = Date.now() > state.timestamp + dependencies.expire;
@@ -184,6 +171,18 @@ export class Cache<T> {
         }
 
         return true;
+    }
+
+
+    #invalidate(key: string) {
+        if (!this.#storage.has(key)) return;
+        const { dependencies, state } = this.#storage.get(key)!;
+        if (!dependencies) return;
+
+        if (!this.#isValid(state, dependencies)) {
+            this.remove(key);
+            return undefined;
+        }
     }
 
 
