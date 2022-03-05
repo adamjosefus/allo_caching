@@ -28,6 +28,7 @@ Deno.test("Cache: save & load", () => {
     testSet.forEach(({ key, value }) => {
         cache.save(key, value);
 
+        assertEquals(cache.has(key), true);
         assertEquals(cache.load(key), value);
         assertEquals(cache.has(key), true);
     });
@@ -38,9 +39,11 @@ Deno.test("Cache: load & generator", () => {
     const cache = new Cache<unknown>();
 
     testSet.forEach(({ key, value }) => {
+        assertEquals(cache.has(`${key}_1`), false);
         assertEquals(cache.load(`${key}_1`, () => value), value);
         assertEquals(cache.has(`${key}_1`), true);
 
+        assertEquals(cache.has(`${key}_2`), false);
         assertEquals(cache.load(`${key}_2`), undefined);
         assertEquals(cache.has(`${key}_2`), false);
     });
@@ -58,10 +61,12 @@ Deno.test({
         const promises: Promise<void>[] = testSet.map(({ key, value }) => new Promise((exit) => {
             cache.save(key, value, dependencies);
 
+            assertEquals(cache.has(key), true);
             assertEquals(cache.load(key), value);
             assertEquals(cache.has(key), true);
 
             setTimeout(() => {
+                assertEquals(cache.has(key), false);
                 assertEquals(cache.load(key), undefined);
                 assertEquals(cache.has(key), false);
                 exit();
@@ -88,20 +93,24 @@ Deno.test({
         const promises: Promise<void>[] = testSet.map(({ key, value }) => new Promise((exit) => {
             cache.save(key, value, dependencies);
 
+            assertEquals(cache.has(key), true);
             assertEquals(cache.load(key), value);
             assertEquals(cache.has(key), true);
 
             setTimeout(() => {
+                assertEquals(cache.has(key), true);
                 assertEquals(cache.load(key), value);
                 assertEquals(cache.has(key), true);
             }, 2 * 10);
 
             setTimeout(() => {
+                assertEquals(cache.has(key), true);
                 assertEquals(cache.load(key), value);
                 assertEquals(cache.has(key), true);
             }, expiration + 10);
 
             setTimeout(() => {
+                assertEquals(cache.has(key), false);
                 assertEquals(cache.load(key), undefined);
                 assertEquals(cache.has(key), false);
                 exit();
@@ -129,16 +138,19 @@ Deno.test({
 
             cache.save(key, value, dependencies);
 
+            assertEquals(cache.has(key), true);
             assertEquals(cache.load(key), value);
             assertEquals(cache.has(key), true);
 
             Deno.removeSync(file1);
 
+            assertEquals(cache.has(key), false);
             assertEquals(cache.load(key), undefined);
             assertEquals(cache.has(key), false);
 
             Deno.removeSync(file2);
 
+            assertEquals(cache.has(key), false);
             assertEquals(cache.load(key), undefined);
             assertEquals(cache.has(key), false);
 
@@ -150,4 +162,28 @@ Deno.test({
             exit();
         });
     })
+});
+
+Deno.test("Cache: save & dependencies (callbacks)", () => {
+    const cache = new Cache<unknown>();
+
+    testSet.forEach(({ key, value }) => {
+        cache.save(key, value, {
+            callbacks: () => true
+        });
+
+        assertEquals(cache.has(key), true);
+        assertEquals(cache.load(key), value);
+        assertEquals(cache.has(key), true);
+    });
+
+    testSet.forEach(({ key, value }) => {
+        cache.save(key, value, {
+            callbacks: () => false
+        });
+
+        assertEquals(cache.has(key), false);
+        assertEquals(cache.load(key), undefined);
+        assertEquals(cache.has(key), false);
+    });
 });
