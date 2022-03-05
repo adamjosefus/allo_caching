@@ -35,9 +35,9 @@ Deno.test("Cache: load & generator", () => {
 Deno.test({
     name: "Cache: save & dependencies (expire)",
     fn: () => new Promise((exit) => {
-        const expiration = 100;
+        const expiration = 50;
         const dependencies: DependenciesType = { expire: expiration };
-        
+
         const cache = new Cache<unknown>();
 
         const promises: Promise<void>[] = testSet.map(({ key, value }) => new Promise((exit) => {
@@ -49,6 +49,42 @@ Deno.test({
                 assertEquals(cache.load(key), undefined);
                 exit();
             }, expiration + 10);
+        }));
+
+
+        Promise.all(promises).then(() => exit());
+    })
+});
+
+
+Deno.test({
+    name: "Cache: save & dependencies (expire & sliding)",
+    fn: () => new Promise((exit) => {
+        const expiration = 50;
+        const dependencies: DependenciesType = {
+            expire: expiration,
+            sliding: true
+        };
+
+        const cache = new Cache<unknown>();
+
+        const promises: Promise<void>[] = testSet.map(({ key, value }) => new Promise((exit) => {
+            cache.save(key, value, dependencies);
+
+            assertEquals(cache.load(key), value);
+
+            setTimeout(() => {
+                assertEquals(cache.load(key), value);
+            }, 2 * 10);
+
+            setTimeout(() => {
+                assertEquals(cache.load(key), value);
+            }, expiration + 10);
+
+            setTimeout(() => {
+                assertEquals(cache.load(key), undefined);
+                exit();
+            }, 3 * expiration + 10);
         }));
 
 
