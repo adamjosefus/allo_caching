@@ -101,6 +101,53 @@ export class Cache<T> {
     }
 
 
+    /**
+     * Save value to cache by key.
+     * @param key 
+     * @param value 
+     */
+    save(key: string, value: T, dependencies?: DependenciesType): void {
+        this.#storage.set(key, {
+            value,
+            dependencies,
+            state: Cache.#createState(dependencies),
+        });
+    }
+
+
+    /**
+     * Check if value exists in cache.
+     * @param key 
+     * @param value 
+     */
+    has(key: string): boolean {
+        this.#invalidate(key);
+
+        return this.#storage.has(key);
+    }
+
+
+    /**
+     * Remove value from cache.
+     * @param key 
+     */
+    remove(key: string): void {
+        this.#storage.delete(key);
+    }
+
+
+    /**
+     * @deprecated Use `remove` instead.
+     * 
+     * Delete value from cache.
+     * @param key 
+     */
+    delete(key: string): void {
+        this.remove(key);
+    }
+
+
+
     #invalidate(key: string) {
         if (!this.#storage.has(key)) return;
         const { dependencies, state } = this.#storage.get(key)!;
@@ -140,62 +187,6 @@ export class Cache<T> {
     }
 
 
-    /**
-     * Save value to cache by key.
-     * @param key 
-     * @param value 
-     */
-    save(key: string, value: T, dependencies?: DependenciesType): void {
-        this.#storage.set(key, {
-            value,
-            dependencies,
-            state: this.#createState(dependencies),
-        });
-    }
-
-
-    /**
-     * Check if value exists in cache.
-     * @param key 
-     * @param value 
-     */
-    has(key: string): boolean {
-        this.#invalidate(key);
-
-        return this.#storage.has(key);
-    }
-
-
-    /**
-     * Remove value from cache.
-     * @param key 
-     */
-    remove(key: string): void {
-        this.#storage.delete(key);
-    }
-
-
-    /**
-     * @deprecated Use `remove` instead.
-     * 
-     * Delete value from cache.
-     * @param key 
-     */
-    delete(key: string): void {
-        this.remove(key);
-    }
-
-
-    #createState(dependencies?: DependenciesType): StateType {
-        const files = [dependencies?.files ?? []].flat();
-
-        return {
-            timestamp: Date.now(),
-            files: Cache.#computeFileModificationMap(files),
-        };
-    }
-
-
     #refreshState(key: string): void {
         if (!this.#storage.has(key)) return;
 
@@ -203,6 +194,17 @@ export class Cache<T> {
 
         if (!dependencies) return;
         if (dependencies.sliding) state.timestamp = Date.now();
+    }
+
+
+
+    static #createState(dependencies?: DependenciesType): StateType {
+        const files = [dependencies?.files ?? []].flat();
+
+        return {
+            timestamp: Date.now(),
+            files: Cache.#computeFileModificationMap(files),
+        };
     }
 
 
