@@ -5,41 +5,31 @@ Simple caching solution in Typescript.
 
 ## `Cache<ValueType>`
 
+### Load or Generate
+
 ```ts
 const cache = new Cache<string>();
 
-const cacheKey = 'abc123';
-
-/**
- * Load from cache.
- * If not found, value will be generated and stored in cache.
- */
-cache.load(cacheKey, () => {
-    const result = 'Lorem ipsum';
-
+// Load from cache.
+// If not found, value will be generated and stored in cache.
+cache.load('key_1', () => {
     // Some expensive operation
-    // ...
+    return 'Lorem ipsum';
+}); // Return type is string
 
-    return result
-}); // -> string
-
-
-/**
- * Load from cache.
- */
-cache.load(cacheKey); // -> string | undefined
+cache.has('key_1'); // true
+cache.load('key_1'); // 'Lorem ipsum'
 
 
-/**
- * Save to cache.
- */
-cache.save(cacheKey, 'Lorem ipsum');
+// Load from cache without generating.
+cache.load('key_2'); // Return type is string | undefined
 
+// Save to cache.
+cache.save('key_2', 'Lorem ipsum');
 
-/**
- * Check if cache exists.
- */
-cache.has(cacheKey); // -> boolean
+// Check if cache exists.
+cache.has('key_2'); // true
+cache.load('key_2'); // 'Lorem ipsum'
 
 ```
 
