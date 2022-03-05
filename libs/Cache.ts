@@ -94,9 +94,12 @@ export class Cache<T> {
 
         const { value, dependencies, state } = stored;
 
-        if (dependencies === undefined) return value;
+        if (!dependencies) return value;
 
-        if (!this.#invalidate(state, dependencies)) return undefined;
+        if (!this.#invalidate(state, dependencies)) {
+            this.remove(key);
+            return undefined;
+        }
 
         this.#updateState(state, dependencies);
 
@@ -107,27 +110,28 @@ export class Cache<T> {
     #invalidate(state: StateType, dependencies: DependenciesType) {
         const now = Date.now();
 
-        if (dependencies.expire !== undefined) {
-            if (now > state.timestamp + dependencies.expire) return true;
+        if (dependencies.expire) {
+            const expired = now > state.timestamp + dependencies.expire;
+
+            if (expired) return true;
         }
 
-        if (dependencies.callbacks !== undefined) {
+        if (dependencies.callbacks) {
             const callbacks = [dependencies.callbacks].flat();
             const invalid = callbacks.some(callback => !callback());
 
-            return invalid;
+            if (invalid) return true;
         }
 
-        if (dependencies.files !== undefined) {
+        if (dependencies.files) {
             const current = Cache.#computeFileState([dependencies.files].flat());
 
             const invalid = [...state.files.entries()].some(([file, modifed]) => {
                 if (!current.has(file)) return true;
-
                 return current.get(file)! > modifed;
             });
 
-            return invalid;
+            if (invalid) return true;
         }
 
         return false;
