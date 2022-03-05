@@ -4,6 +4,7 @@
 
 import { type DependenciesType } from "./DependenciesType.ts";
 
+
 export type GeneratorType<T> = () => T;
 
 type LoadOnlyEntryType =
@@ -16,7 +17,6 @@ type LoadAndGenerateEntryType<T> =
 
 type LoadEntryType<T> =
     | LoadOnlyEntryType | LoadAndGenerateEntryType<T>;
-
 
 type StateType = {
     timestamp: number;
@@ -93,11 +93,12 @@ export class Cache<T> {
         if (stored === undefined) return undefined;
 
         const { value, dependencies, state } = stored;
+
         if (dependencies === undefined) return value;
 
         if (!this.#invalidate(state, dependencies)) return undefined;
 
-        // TODO: if ((dependencies?.sliding ?? false) === true) timestamp = Date.now();
+        this.#updateState(state, dependencies);
 
         return value;
     }
@@ -105,16 +106,32 @@ export class Cache<T> {
 
     #invalidate(state: StateType, dependencies: DependenciesType) {
         const now = Date.now();
-        
+
         if (dependencies.expire !== undefined) {
             if (now > state.timestamp + dependencies.expire) return true;
         }
 
+        if (dependencies.callbacks !== undefined) {
+            const callbacks = [dependencies.callbacks].flat();
+            const invalid = callbacks.some(callback => !callback());
+
+            return invalid;
+        }
+
+        if (dependencies.files !== undefined) {
+            const current = Cache.#computeFileState([dependencies.files].flat());
+
+            const invalid = [...state.files.entries()].some(([file, modifed]) => {
+                if (!current.has(file)) return true;
+
+                return current.get(file)! > modifed;
+            });
+
+            return invalid;
+        }
 
         return false;
     }
-
-
 
 
     /**
@@ -126,7 +143,7 @@ export class Cache<T> {
         this.#storage.set(key, {
             value,
             dependencies,
-            timestamp: Date.now(),
+            state: this.#createState(dependencies),
         });
     }
 
@@ -161,11 +178,31 @@ export class Cache<T> {
     }
 
 
+    #createState(dependencies?: DependenciesType): StateType {
+        const files = [dependencies?.files ?? []].flat();
 
-    #createState(dependencies: DependenciesType): StateType {
         return {
             timestamp: Date.now(),
-            files: new Map(),
+            files: Cache.#computeFileState(files),
         };
+    }
+
+
+    #updateState(state: StateType, dependencies: DependenciesType): void {
+        if (dependencies.sliding) state.timestamp = Date.now();
+    }
+
+
+    static #computeFileState(files: string[]): Map<string, number> {
+        const result = new Map<string, number>();
+
+        files.forEach(file => {
+            const modified = Deno.statSync(file).mtime?.getTime() ?? null;
+            if (modified === null) return;
+
+            result.set(file, modified);
+        });
+
+        return result;
     }
 }
