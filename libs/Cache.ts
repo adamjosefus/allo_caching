@@ -96,7 +96,9 @@ export class Cache<T> {
 
         if (!dependencies) return value;
 
-        if (!this.#invalidate(state, dependencies)) {
+        const invalidate = !this.isValid(state, dependencies);
+
+        if (invalidate) {
             this.remove(key);
             return undefined;
         }
@@ -107,34 +109,30 @@ export class Cache<T> {
     }
 
 
-    #invalidate(state: StateType, dependencies: DependenciesType) {
-        const now = Date.now();
-
+    isValid(state: StateType, dependencies: DependenciesType) {
         if (dependencies.expire) {
-            const expired = now > state.timestamp + dependencies.expire;
-
-            if (expired) return true;
+            const expired = Date.now() > state.timestamp + dependencies.expire;
+            if (expired) return false;
         }
 
         if (dependencies.callbacks) {
             const callbacks = [dependencies.callbacks].flat();
             const invalid = callbacks.some(callback => !callback());
 
-            if (invalid) return true;
+            if (invalid) return false;
         }
 
         if (dependencies.files) {
-            const current = Cache.#computeFileState([dependencies.files].flat());
+            const current = Cache.#computeFileModificationMap([dependencies.files].flat());
 
             const invalid = [...state.files.entries()].some(([file, modifed]) => {
-                if (!current.has(file)) return true;
-                return current.get(file)! > modifed;
+                return !current.has(file) || current.get(file) !== modifed;
             });
 
-            if (invalid) return true;
+            if (invalid) return false;
         }
 
-        return false;
+        return true;
     }
 
 
@@ -183,11 +181,12 @@ export class Cache<T> {
 
 
     #createState(dependencies?: DependenciesType): StateType {
+        // TODO: Implement
         const files = [dependencies?.files ?? []].flat();
 
         return {
             timestamp: Date.now(),
-            files: Cache.#computeFileState(files),
+            files: Cache.#computeFileModificationMap(files),
         };
     }
 
@@ -197,14 +196,18 @@ export class Cache<T> {
     }
 
 
-    static #computeFileState(files: string[]): Map<string, number> {
+    static #computeFileModificationMap(files: string[]): Map<string, number> {
         const result = new Map<string, number>();
 
         files.forEach(file => {
-            const modified = Deno.statSync(file).mtime?.getTime() ?? null;
-            if (modified === null) return;
+            try {
+                const modified = Deno.statSync(file).mtime?.getTime() ?? null;
+                if (modified === null) return;
 
-            result.set(file, modified);
+                result.set(file, modified);
+            } catch (_err) {
+                return;
+            }
         });
 
         return result;
