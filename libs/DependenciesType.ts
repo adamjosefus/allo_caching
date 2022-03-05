@@ -4,10 +4,10 @@
 
 
 export type DependenciesType = {
-    /**
-     * Set priority of the cashed value.
-     */
-    priority?: number;
+    // /**
+    //  * Set priority of the cashed value.
+    //  */
+    // priority?: number;
     /**
      * Expired time in milliseconds.
      */
