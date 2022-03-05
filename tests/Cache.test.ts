@@ -17,7 +17,9 @@ Deno.test("Cache: save & load", () => {
 
     testSet.forEach(({ key, value }) => {
         cache.save(key, value);
+
         assertEquals(cache.load(key), value);
+        assertEquals(cache.has(key), true);
     });
 });
 
@@ -27,7 +29,10 @@ Deno.test("Cache: load & generator", () => {
 
     testSet.forEach(({ key, value }) => {
         assertEquals(cache.load(`${key}_1`, () => value), value);
+        assertEquals(cache.has(`${key}_1`), true);
+
         assertEquals(cache.load(`${key}_2`), undefined);
+        assertEquals(cache.has(`${key}_2`), false);
     });
 });
 
@@ -44,9 +49,11 @@ Deno.test({
             cache.save(key, value, dependencies);
 
             assertEquals(cache.load(key), value);
+            assertEquals(cache.has(key), true);
 
             setTimeout(() => {
                 assertEquals(cache.load(key), undefined);
+                assertEquals(cache.has(key), false);
                 exit();
             }, expiration + 10);
         }));
@@ -72,22 +79,65 @@ Deno.test({
             cache.save(key, value, dependencies);
 
             assertEquals(cache.load(key), value);
+            assertEquals(cache.has(key), true);
 
             setTimeout(() => {
                 assertEquals(cache.load(key), value);
+                assertEquals(cache.has(key), true);
             }, 2 * 10);
 
             setTimeout(() => {
                 assertEquals(cache.load(key), value);
+                assertEquals(cache.has(key), true);
             }, expiration + 10);
 
             setTimeout(() => {
                 assertEquals(cache.load(key), undefined);
+                assertEquals(cache.has(key), false);
                 exit();
             }, 3 * expiration + 10);
         }));
 
 
         Promise.all(promises).then(() => exit());
+    })
+});
+
+
+Deno.test({
+    name: "Cache: save & dependencies (files)",
+    fn: () => new Promise((exit) => {
+        const cache = new Cache<unknown>();
+
+        const promises: Promise<void>[] = testSet.map(({ key, value }) => new Promise((exit) => {
+            const file1 = Deno.makeTempFileSync();
+            const file2 = Deno.makeTempFileSync();
+
+            const dependencies: DependenciesType = {
+                files: [file1, file2]
+            };
+
+            cache.save(key, value, dependencies);
+
+            assertEquals(cache.load(key), value);
+            assertEquals(cache.has(key), true);
+
+            Deno.removeSync(file1);
+
+            assertEquals(cache.load(key), undefined);
+            assertEquals(cache.has(key), false);
+
+            Deno.removeSync(file2);
+
+            assertEquals(cache.load(key), undefined);
+            assertEquals(cache.has(key), false);
+
+            exit();
+        }));
+
+
+        Promise.all(promises).then(() => {
+            exit();
+        });
     })
 });
