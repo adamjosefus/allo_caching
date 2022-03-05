@@ -91,12 +91,9 @@ export class Cache<T> {
     #load(key: string): T | undefined {
         if (!this.#storage.has(key)) return undefined;
 
-        this.#invalidate(key);
+        this.#update(key, true);
 
         const { value } = this.#storage.get(key)!;
-
-        this.#refreshState(key);
-
         return value;
     }
 
@@ -121,7 +118,7 @@ export class Cache<T> {
      * @param value 
      */
     has(key: string): boolean {
-        this.#invalidate(key);
+        this.#update(key, false);
 
         return this.#storage.has(key);
     }
@@ -174,27 +171,22 @@ export class Cache<T> {
     }
 
 
-    #invalidate(key: string) {
+    #update(key: string, refreshState: boolean): void {
         if (!this.#storage.has(key)) return;
+
         const { dependencies, state } = this.#storage.get(key)!;
+
         if (!dependencies) return;
 
         if (!this.#isValid(state, dependencies)) {
             this.remove(key);
-            return undefined;
+            return
+        }
+
+        if (refreshState) {
+            if (dependencies.sliding) state.timestamp = Date.now();
         }
     }
-
-
-    #refreshState(key: string): void {
-        if (!this.#storage.has(key)) return;
-
-        const { dependencies, state } = this.#storage.get(key)!;
-
-        if (!dependencies) return;
-        if (dependencies.sliding) state.timestamp = Date.now();
-    }
-
 
 
     static #createState(dependencies?: DependenciesType): StateType {
