@@ -181,7 +181,6 @@ export class Cache<T> {
 
 
     #createState(dependencies?: DependenciesType): StateType {
-        // TODO: Implement
         const files = [dependencies?.files ?? []].flat();
 
         return {
