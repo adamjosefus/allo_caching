@@ -133,17 +133,6 @@ export class Cache<T> {
     }
 
 
-    /**
-     * @deprecated Use `remove` instead.
-     * 
-     * Delete value from cache.
-     * @param key 
-     */
-    delete(key: string): void {
-        this.remove(key);
-    }
-
-
     #isValid(state: StateType, dependencies: DependenciesType) {
         if (dependencies.expire) {
             const expired = Date.now() > state.timestamp + dependencies.expire;
