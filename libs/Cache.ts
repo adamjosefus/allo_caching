@@ -96,7 +96,7 @@ export class Cache<T> {
 
         if (!dependencies) return value;
 
-        const invalidate = !this.isValid(state, dependencies);
+        const invalidate = !this.#isValid(state, dependencies);
 
         if (invalidate) {
             this.remove(key);
@@ -109,7 +109,7 @@ export class Cache<T> {
     }
 
 
-    isValid(state: StateType, dependencies: DependenciesType) {
+    #isValid(state: StateType, dependencies: DependenciesType) {
         if (dependencies.expire) {
             const expired = Date.now() > state.timestamp + dependencies.expire;
             if (expired) return false;
@@ -156,7 +156,7 @@ export class Cache<T> {
      * @param value 
      */
     has(key: string): boolean {
-        return this.#load(key) !== undefined;
+        return this.#storage.has(key);
     }
 
 
