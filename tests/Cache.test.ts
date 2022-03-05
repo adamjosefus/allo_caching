@@ -12,6 +12,16 @@ const testSet = [
 ];
 
 
+Deno.test("Cache: load returns type", () => {
+    const cache = new Cache<number>();
+
+    const _v1: number | undefined = cache.load("test");
+    const _v2: number = cache.load("test", () => 123);
+    const _v3: number = cache.load("test", () => 123, { expire: 1 });
+    const _v4: number | undefined = cache.load("test", { expire: 1 });
+});
+
+
 Deno.test("Cache: save & load", () => {
     const cache = new Cache<unknown>();
 
