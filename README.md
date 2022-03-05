@@ -81,7 +81,7 @@ cache.save('key', "My text data", {
     callbacks: [
         isValid,
         () => false,
-    ] // Expired when some callback return false.
+    ] // Expired when some callback returns false.
 });
 ```
 
