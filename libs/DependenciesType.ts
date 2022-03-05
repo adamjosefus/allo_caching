@@ -13,15 +13,15 @@ export type DependenciesType = {
      */
     expire?: number,
     /**
-     * If true, extends the validity period with each reading.
+     * If callback return false, the cache is invalidated.
      */
-    sliding?: boolean,
+    callbacks?: (() => boolean) | (() => boolean)[],
     /**
      * If files are changed, the cache is invalidated.
      */
     files?: string | string[],
     /**
-     * If callback return false, the cache is invalidated.
+     * If true, extends the validity period with each reading.
      */
-    callbacks?: (() => boolean) | (() => boolean)[],
+    sliding?: boolean,
 };
